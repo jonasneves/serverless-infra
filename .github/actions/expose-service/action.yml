@@ -110,6 +110,20 @@ runs:
       shell: bash
       run: |
         for i in $(seq 1 ${{ inputs.max_health_attempts }}); do
+          if ! docker ps | grep -q app-container; then
+            echo "Container stopped unexpectedly"
+            echo ""
+            echo "=== Container logs ==="
+            docker logs app-container 2>&1
+            echo ""
+            echo "=== Exit code ==="
+            docker inspect app-container --format='{{.State.ExitCode}}'
+            echo ""
+            echo "=== Memory ==="
+            free -h
+            exit 1
+          fi
+
           if curl -sf http://localhost:${{ inputs.port }}${{ inputs.health_check }} > /dev/null; then
             echo "Container healthy"
             exit 0
