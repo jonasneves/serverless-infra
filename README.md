@@ -1,6 +1,8 @@
 # Serverless Infrastructure
 
-Run containers and expose them via Cloudflare Tunnels on GitHub Actions.
+Free PR previews and continuous hosting on GitHub Actions. No Vercel, no Netlify, no vendor lock-in.
+
+Run any container and expose it via Cloudflare Tunnels.
 
 ## Modes
 
@@ -42,6 +44,21 @@ Run containers and expose them via Cloudflare Tunnels on GitHub Actions.
     duration: '5.5'
 ```
 
+## How It Works
+
+```
+GitHub Actions Runner
+├── Docker Container (your app)
+│   └── Listens on localhost:port
+└── cloudflared
+    └── Tunnel → Public HTTPS URL
+```
+
+1. Build or pull your Docker image
+2. Start container on specified port
+3. cloudflared creates tunnel to container
+4. Public URL returned for use in workflow
+
 ## Inputs
 
 | Input | Required | Default | Description |
@@ -72,6 +89,7 @@ Run containers and expose them via Cloudflare Tunnels on GitHub Actions.
 
 - [PR Preview](examples/pr-preview.yml) - Preview deployments on pull requests
 - [Continuous Hosting](examples/continuous-hosting.yml) - 24/7 hosting with auto-restart
+- [react-preview-demo](https://github.com/jonasneves/react-preview-demo) - Working React demo
 
 ## Managed Tunnel Setup
 
