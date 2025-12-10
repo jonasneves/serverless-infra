@@ -1,0 +1,65 @@
+# PR Preview Deployment
+#
+# Builds and deploys a preview on every PR, comments with the URL.
+# Automatically cancels the preview when PR is closed.
+#
+# Requirements:
+# - Dockerfile in repo root (or adjust path)
+#
+# Copy to .github/workflows/preview.yml
+
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'preview.yml',
+              status: 'in_progress'
+            });
+            for (const run of runs.data.workflow_runs) {
+              if (run.head_sha === context.payload.pull_request.head.sha) {
+                await github.rest.actions.cancelWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: run.id
+                });
+              }
+            }
+
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jonasneves/serverless-infra/.github/actions/expose-service@main
+        id: expose
+        with:
+          dockerfile: ./Dockerfile
+          port: 3000
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Preview: ${{ steps.expose.outputs.url }}`
+            });
