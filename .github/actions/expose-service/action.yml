@@ -75,10 +75,8 @@ runs:
       if: inputs.dockerfile != ''
       shell: bash
       run: |
-        DOCKERFILE="${{ inputs.dockerfile }}"
-        CONTEXT=$(dirname "$DOCKERFILE")
-        docker build -t app:local -f "$DOCKERFILE" "$CONTEXT"
-        echo "Built image from $DOCKERFILE"
+        docker build -t app:local -f "${{ inputs.dockerfile }}" .
+        echo "Built image from ${{ inputs.dockerfile }}"
 
     - name: Pull image
       if: inputs.image != ''
